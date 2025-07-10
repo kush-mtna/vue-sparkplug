@@ -7,35 +7,38 @@
     <!-- OEE Dashboard -->
     <div class="dashboard">
       <div class="dashboard-header">
-        <div class="machine-label">
-          <div class="machine-title">Machine 1</div>
-          <div class="machine-online">
-            Online: <b :style="{color: tags['Machines/Machine 1/Availability/Machine Online']==='True' ? '#00b894' : '#d63031'}">{{ tags['Machines/Machine 1/Availability/Machine Online'] }}</b>
+        <div class="gauges-row four-col-row">
+          <div class="oee-card oee-card-col">
+            <div class="machine-title">{{ machineNumber }}</div>
+            <div class="machine-online">
+              Online: <b :style="{color: tags['Machines/Machine 1/Availability/Machine Online']==='True' ? '#00b894' : '#d63031'}">{{ tags['Machines/Machine 1/Availability/Machine Online'] }}</b>
+            </div>
+            <div class="oee-label-side">
+              <span>OEE</span>
+              <span class="oee-value-side">{{ oee }}</span>
+            </div>
+            <div v-if="oeeRaw > 100" class="gauge-warning" style="margin-top:0.2rem;"><span class="gauge-warning-note">Something is wrong, OEE should not exceed 100%</span></div>
           </div>
-          <div class="oee-label-side">
-            <span>OEE</span>
-            <span class="oee-value-side">{{ typeof oee === 'string' ? oee : oee + '%' }}</span>
-          </div>
-        </div>
-        <div class="gauges-row">
           <div class="gauge-card">
-            <apexchart type="radialBar" height="220" :options="gaugeOptions('Availability', availability, '#a259ec')" :series="[availability]"></apexchart>
+            <apexchart type="radialBar" height="220" :options="gaugeOptions('Availability', availability, '#a259ec', availabilityRaw)" :series="[availability]" />
+            <div v-if="availabilityRaw > 100" class="gauge-warning"><span class="gauge-warning-note">Something is wrong, availability should not exceed 100%</span></div>
             <div class="gauge-attrs">
               <div>Run Time: <b>{{ tags['Machines/Machine 1/Availability/Run Time'] || '-' }}</b></div>
               <div>Production Time: <b>{{ tags['Machines/Machine 1/Availability/Production Time'] || '-' }}</b></div>
               <div>Down Time: <b>{{ tags['Machines/Machine 1/Availability/Down Time'] || '-' }}</b></div>
-              <div>Start Time: <b>{{ formatTimestamp(tags['Machines/Machine 1/Availability/Start Time']) }}</b></div>
             </div>
           </div>
           <div class="gauge-card">
-            <apexchart type="radialBar" height="220" :options="gaugeOptions('Performance', performance, '#0984e3')" :series="[performance]"></apexchart>
+            <apexchart type="radialBar" height="220" :options="gaugeOptions('Performance', performance, '#0984e3', performanceRaw)" :series="[performance]" />
+            <div v-if="performanceRaw > 100" class="gauge-warning"><span class="gauge-warning-note">Something is wrong, performance should not exceed 100%</span></div>
             <div class="gauge-attrs">
               <div>Ideal Cycle: <b>{{ tags['Machines/Machine 1/Performance/Ideal Cycle Time'] || '-' }}</b></div>
               <div>Avg Cycle: <b>{{ tags['Machines/Machine 1/Performance/Avg Cycle Time'] || '-' }}</b></div>
             </div>
           </div>
           <div class="gauge-card">
-            <apexchart type="radialBar" height="220" :options="gaugeOptions('Quality', quality, '#fdcb6e')" :series="[quality]"></apexchart>
+            <apexchart type="radialBar" height="220" :options="gaugeOptions('Quality', quality, '#fdcb6e', qualityRaw)" :series="[quality]" />
+            <div v-if="qualityRaw > 100" class="gauge-warning"><span class="gauge-warning-note">Something is wrong, quality should not exceed 100%</span></div>
             <div class="gauge-attrs">
               <div>Good Count: <b>{{ tags['Machines/Machine 1/Quality/Good Count'] || '-' }}</b></div>
               <div>Reject Count: <b>{{ tags['Machines/Machine 1/Quality/Reject Count'] || '-' }}</b></div>
@@ -72,21 +75,48 @@ export default {
     }
   },
   computed: {
+    machineNumber() {
+      // Find a tag that starts with 'Machines/' and extract the machine number
+      const tag = Object.keys(this.tags).find(t => t.startsWith('Machines/'))
+      if (!tag) return 'Machine 1'
+      const match = tag.match(/^Machines\/([^/]+)/)
+      return match ? match[1] : 'Machine 1'
+    },
     availability() {
       const v = parseFloat(this.tags['Machines/Machine 1/Availability/Availabilty'])
-      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      const percent = isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      return percent > 100 ? 100 : percent
     },
     performance() {
       const v = parseFloat(this.tags['Machines/Machine 1/Performance/Performance'])
-      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      const percent = isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      return percent > 100 ? 100 : percent
     },
     quality() {
+      const v = parseFloat(this.tags['Machines/Machine 1/Quality/Quality'])
+      const percent = isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      return percent > 100 ? 100 : percent
+    },
+    availabilityRaw() {
+      const v = parseFloat(this.tags['Machines/Machine 1/Availability/Availabilty'])
+      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
+    },
+    performanceRaw() {
+      const v = parseFloat(this.tags['Machines/Machine 1/Performance/Performance'])
+      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
+    },
+    qualityRaw() {
       const v = parseFloat(this.tags['Machines/Machine 1/Quality/Quality'])
       return isNaN(v) ? 0 : Math.round(v * 10000) / 100
     },
     oee() {
       const v = parseFloat(this.tags['Machines/Machine 1/OEE'])
-      return isNaN(v) ? '-' : (Math.round(v * 10000) / 100) + '%'
+      const percent = isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      return percent > 100 ? '100+%' : percent + '%'
+    },
+    oeeRaw() {
+      const v = parseFloat(this.tags['Machines/Machine 1/OEE'])
+      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
     }
   },
   methods: {
@@ -141,7 +171,7 @@ export default {
       if (isNaN(d.getTime())) return '-'
       return d.toLocaleString()
     },
-    gaugeOptions(label, value, color) {
+    gaugeOptions(label, value, color, rawValue) {
       return {
         chart: {
           type: 'radialBar',
@@ -164,7 +194,7 @@ export default {
                 offsetY: -10,
                 fontSize: '28px',
                 color: color,
-                formatter: val => val + '%'
+                formatter: (function(rv) { return val => (rv > 100 ? '100+%' : val + '%') })(rawValue)
               }
             }
           }
@@ -222,17 +252,41 @@ export default {
   font-size: 1.1rem;
   color: #636e72;
   margin-bottom: 0.5rem;
+  width: auto;
 }
 .oee-value-side {
   font-size: 2.1rem;
   color: #00b894;
   font-weight: bold;
 }
-.gauges-row {
+.four-col-row {
   display: flex;
-  justify-content: space-around;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.oee-card-col {
+  min-width: 220px;
+  max-width: 260px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 1px 8px #0001;
+  padding: 1.2rem 1.2rem 0.5rem 1.2rem;
+  height: 100%;
+}
+.oee-attrs {
+  margin-top: 0.7rem;
+  font-size: 1rem;
+  color: #444;
+  width: 100%;
+}
+.oee-attrs div {
+  margin-bottom: 0.2rem;
 }
 .gauge-card {
   background: #fff;
@@ -265,6 +319,8 @@ export default {
   padding: 1.5rem 3rem;
   text-align: center;
   min-width: 200px;
+  width: 200px;
+  /* Ensures the card width stays fixed as before */
 }
 .oee-label {
   font-size: 1.2rem;
@@ -275,5 +331,17 @@ export default {
   font-size: 2.5rem;
   color: #00b894;
   font-weight: bold;
+}
+.gauge-warning {
+  color: #d63031;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+.gauge-warning-note {
+  font-size: 0.95rem;
+  color: #d63031;
+  font-weight: normal;
 }
 </style>
