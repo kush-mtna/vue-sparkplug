@@ -61,7 +61,6 @@
 </template>
 
 <script>
-import ApexCharts from 'apexcharts'
 import VueApexCharts from 'vue3-apexcharts'
 
 export default {
@@ -225,6 +224,7 @@ export default {
   flex-direction: row;
   align-items: flex-start;
   gap: 2.5rem;
+  justify-content: center;
 }
 .machine-label {
   min-width: 170px;
@@ -277,7 +277,6 @@ export default {
   border-radius: 1rem;
   box-shadow: 0 1px 8px #0001;
   padding: 1.2rem 1.2rem 0.5rem 1.2rem;
-  height: 100%;
 }
 .oee-attrs {
   margin-top: 0.7rem;
