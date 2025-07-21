@@ -1,37 +1,40 @@
 <template>
   <div>
     <div :class="['compact-oee-card', { expanded: !compact }]">
-      <div class="machine-title">{{ tagPath }}</div>
-      <div class="oee-label-side">
+      <div class="machine-title compact-title">{{ tagPath }}</div>
+      <div class="oee-label-side compact-oee-label">
         <span>OEE</span>
-        <span class="oee-value-side">{{ oee }}</span>
+        <span
+          class="oee-value-side compact-oee-value"
+          :class="oeeColorClass"
+        >{{ oee }}</span>
       </div>
-      <div v-if="!compact" class="expanded-metrics">
-        <div class="metric-row">
-          <span class="metric-label">Availability:</span>
-          <span class="metric-value">{{ availability }}%</span>
+      <div class="metrics-condensed">
+        <div class="metric-row compact-metric-row">
+          <span class="metric-label compact-metric-label">Availability</span>
+          <span class="metric-value compact-metric-value">{{ availability.toFixed(2) }}%</span>
         </div>
-        <div class="bar-container">
-          <div class="bar-bg">
-            <div class="bar-fill availability-bar" :style="{ width: availability + '%' }"></div>
+        <div class="bar-container compact-bar-container">
+          <div class="bar-bg compact-bar-bg">
+            <div class="bar-fill availability-bar compact-bar-fill" :style="{ width: availability + '%' }"></div>
           </div>
         </div>
-        <div class="metric-row">
-          <span class="metric-label">Performance:</span>
-          <span class="metric-value">{{ performance }}%</span>
+        <div class="metric-row compact-metric-row">
+          <span class="metric-label compact-metric-label">Performance</span>
+          <span class="metric-value compact-metric-value">{{ performance.toFixed(2) }}%</span>
         </div>
-        <div class="bar-container">
-          <div class="bar-bg">
-            <div class="bar-fill performance-bar" :style="{ width: performance + '%' }"></div>
+        <div class="bar-container compact-bar-container">
+          <div class="bar-bg compact-bar-bg">
+            <div class="bar-fill performance-bar compact-bar-fill" :style="{ width: performance + '%' }"></div>
           </div>
         </div>
-        <div class="metric-row">
-          <span class="metric-label">Quality:</span>
-          <span class="metric-value">{{ quality }}%</span>
+        <div class="metric-row compact-metric-row">
+          <span class="metric-label compact-metric-label">Quality</span>
+          <span class="metric-value compact-metric-value">{{ quality.toFixed(2) }}%</span>
         </div>
-        <div class="bar-container">
-          <div class="bar-bg">
-            <div class="bar-fill quality-bar" :style="{ width: quality + '%' }"></div>
+        <div class="bar-container compact-bar-container">
+          <div class="bar-bg compact-bar-bg">
+            <div class="bar-fill quality-bar compact-bar-fill" :style="{ width: quality + '%' }"></div>
           </div>
         </div>
       </div>
@@ -102,6 +105,15 @@ export default {
     oeeRaw() {
       const v = parseFloat(this.tags['oee'])
       return isNaN(v) ? 0 : Number(v.toFixed(2))
+    },
+    oeeColorClass() {
+      const v = parseFloat(this.tags['oee'])
+      // Read thresholds from Vite environment variables, fallback to defaults if not set
+      const green = parseFloat(import.meta.env.VITE_OEE_GREEN_THRESHOLD) || 90
+      const orange = parseFloat(import.meta.env.VITE_OEE_ORANGE_THRESHOLD) || 80
+      if (v > green) return 'oee-green'
+      if (v >= orange) return 'oee-orange'
+      return 'oee-red'
     }
   },
   methods: {
@@ -286,7 +298,7 @@ export default {
   background: #fff;
   border-radius: 1rem;
   box-shadow: 0 1px 8px #0001;
-  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  padding: 1.5rem;
   min-width: 180px;
   min-height: 120px;
   cursor: pointer;
@@ -317,7 +329,7 @@ export default {
   font-weight: 500;
 }
 .metric-value {
-  color: #0984e3;
+  color: #000;
   font-weight: bold;
 }
 .bar-container {
@@ -343,9 +355,65 @@ export default {
   background: #a259ec;
 }
 .performance-bar {
-  background: #0984e3;
+  background: #e84393;
 }
 .quality-bar {
-  background: #fdcb6e;
+  background: #0984e3;
+}
+.compact-title {
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+  text-align: center;
+  word-break: break-all;
+}
+.compact-oee-label {
+  font-size: 0.7rem;
+  gap: 0.2rem;
+  margin-bottom: 0.1rem;
+  margin-top: 0.5rem;
+}
+.compact-oee-value {
+  font-size: 1.1rem;
+}
+.metrics-condensed {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  margin-top: 0.5rem; /* Add margin to separate OEE from metrics */
+}
+.compact-metric-row {
+  font-size: 0.7rem;
+  padding: 0.05rem 0.1rem;
+  justify-content: space-between;
+}
+.compact-metric-label {
+  font-weight: 500;
+  color: #636e72;
+}
+.compact-metric-value {
+  color: #636e72;
+  font-weight: bold;
+}
+.compact-bar-container {
+  margin: 0.01rem 0 0.5rem 0;
+  height: 8px;
+}
+.compact-bar-bg {
+  height: 8px;
+  border-radius: 4px;
+}
+.compact-bar-fill {
+  height: 8px;
+  border-radius: 4px;
+}
+.oee-green {
+  color: #00b894 !important;
+}
+.oee-orange {
+  color: #fdcb6e !important;
+}
+.oee-red {
+  color: #d63031 !important;
 }
 </style> 

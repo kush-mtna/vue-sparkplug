@@ -182,8 +182,8 @@ export default {
   text-shadow: 0 2px 12px #a259ec22;
 }
 .main-title .highlight {
-  color: #a259ec;
-  background: linear-gradient(90deg, #a259ec 0%, #fdcb6e 100%);
+  color: #e84393;
+  background: linear-gradient(90deg, #e84393 0%, #0984e3 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
