@@ -1,42 +1,37 @@
 <template>
-  <div class="dashboard">
-    <div class="dashboard-header">
-      <div class="gauges-row four-col-row">
-        <div class="oee-card oee-card-col">
-          <div class="machine-title">{{ machineTitle }}</div>
-          <div class="machine-online">
-            Online: <b :style="{color: tags[`${tagPath}/Availability/Machine Online`]==='True' ? '#00b894' : '#d63031'}">{{ tags[`${tagPath}/Availability/Machine Online`] }}</b>
+  <div>
+    <div :class="['compact-oee-card', { expanded: !compact }]">
+      <div class="machine-title">{{ tagPath }}</div>
+      <div class="oee-label-side">
+        <span>OEE</span>
+        <span class="oee-value-side">{{ oee }}</span>
+      </div>
+      <div v-if="!compact" class="expanded-metrics">
+        <div class="metric-row">
+          <span class="metric-label">Availability:</span>
+          <span class="metric-value">{{ availability }}%</span>
+        </div>
+        <div class="bar-container">
+          <div class="bar-bg">
+            <div class="bar-fill availability-bar" :style="{ width: availability + '%' }"></div>
           </div>
-          <div class="oee-label-side">
-            <span>OEE</span>
-            <span class="oee-value-side">{{ oee }}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Performance:</span>
+          <span class="metric-value">{{ performance }}%</span>
+        </div>
+        <div class="bar-container">
+          <div class="bar-bg">
+            <div class="bar-fill performance-bar" :style="{ width: performance + '%' }"></div>
           </div>
-          <div v-if="oeeRaw > 100" class="gauge-warning" style="margin-top:0.2rem;"><span class="gauge-warning-note">Something is wrong, OEE should not exceed 100%</span></div>
         </div>
-        <div class="gauge-card">
-          <apexchart type="radialBar" height="220" :options="gaugeOptions('Availability', availability, '#a259ec', availabilityRaw)" :series="[availability]" />
-          <div v-if="availabilityRaw > 100" class="gauge-warning"><span class="gauge-warning-note">Something is wrong, availability should not exceed 100%</span></div>
-                      <div class="gauge-attrs">
-              <div>Run Time: <b>{{ formatTime(tags[`${tagPath}/Availability/Run Time`]) }}</b></div>
-              <div>Production Time: <b>{{ formatTime(tags[`${tagPath}/Availability/Production Time`]) }}</b></div>
-              <div>Down Time: <b>{{ formatTime(tags[`${tagPath}/Availability/Down Time`]) }}</b></div>
-            </div>
+        <div class="metric-row">
+          <span class="metric-label">Quality:</span>
+          <span class="metric-value">{{ quality }}%</span>
         </div>
-        <div class="gauge-card">
-          <apexchart type="radialBar" height="220" :options="gaugeOptions('Performance', performance, '#0984e3', performanceRaw)" :series="[performance]" />
-          <div v-if="performanceRaw > 100" class="gauge-warning"><span class="gauge-warning-note">Something is wrong, performance should not exceed 100%</span></div>
-                      <div class="gauge-attrs">
-              <div>Ideal Cycle: <b>{{ formatTime(tags[`${tagPath}/Performance/Ideal Cycle Time`]) }}</b></div>
-              <div>Avg Cycle: <b>{{ formatAvgCycle(tags[`${tagPath}/Performance/Avg Cycle Time`]) }}</b></div>
-            </div>
-        </div>
-        <div class="gauge-card">
-          <apexchart type="radialBar" height="220" :options="gaugeOptions('Quality', quality, '#fdcb6e', qualityRaw)" :series="[quality]" />
-          <div v-if="qualityRaw > 100" class="gauge-warning"><span class="gauge-warning-note">Something is wrong, quality should not exceed 100%</span></div>
-          <div class="gauge-attrs">
-            <div>Good Count: <b>{{ tags[`${tagPath}/Quality/Good Count`] || '-' }}</b></div>
-            <div>Reject Count: <b>{{ tags[`${tagPath}/Quality/Reject Count`] || '-' }}</b></div>
-            <div>Total Count: <b>{{ tags[`${tagPath}/Quality/Total Count`] || '-' }}</b></div>
+        <div class="bar-container">
+          <div class="bar-bg">
+            <div class="bar-fill quality-bar" :style="{ width: quality + '%' }"></div>
           </div>
         </div>
       </div>
@@ -53,71 +48,63 @@ export default {
     apexchart: VueApexCharts
   },
   props: {
-    tagPath: {
-      type: String,
-      required: true,
-      default: 'Machines/Machine 1'
-    },
     tags: {
       type: Object,
       required: true,
       default: () => ({})
+    },
+    tagPath: {
+      type: String,
+      required: true
+    },
+    compact: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
-    machineTitle() {
-      // Extract the machine title from the tagPath (everything after the last '/')
-      const parts = this.tagPath.split('/')
-      return parts[parts.length - 1] || 'Machine'
-    },
     availability() {
-      const v = parseFloat(this.tags[`${this.tagPath}/Availability/Availabilty`])
-      const percent = isNaN(v) ? 0 : Math.round(v * 10000) / 100
-      return percent > 100 ? 100 : percent
+      const v = parseFloat(this.tags['oeeAvailability'])
+      const percent = isNaN(v) ? 0 : v
+      const clamped = percent > 100 ? 100 : percent
+      return Number(clamped.toFixed(2))
     },
     performance() {
-      const v = parseFloat(this.tags[`${this.tagPath}/Performance/Performance`])
-      const percent = isNaN(v) ? 0 : Math.round(v * 10000) / 100
-      return percent > 100 ? 100 : percent
+      const v = parseFloat(this.tags['oeePerformance'])
+      const percent = isNaN(v) ? 0 : v
+      const clamped = percent > 100 ? 100 : percent
+      return Number(clamped.toFixed(2))
     },
     quality() {
-      const v = parseFloat(this.tags[`${this.tagPath}/Quality/Quality`])
-      const percent = isNaN(v) ? 0 : Math.round(v * 10000) / 100
-      return percent > 100 ? 100 : percent
+      const v = parseFloat(this.tags['oeeQuality'])
+      const percent = isNaN(v) ? 0 : v
+      const clamped = percent > 100 ? 100 : percent
+      return Number(clamped.toFixed(2))
     },
     availabilityRaw() {
-      const v = parseFloat(this.tags[`${this.tagPath}/Availability/Availabilty`])
-      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      const v = parseFloat(this.tags['oeeAvailability'])
+      return isNaN(v) ? 0 : Number(v.toFixed(2))
     },
     performanceRaw() {
-      const v = parseFloat(this.tags[`${this.tagPath}/Performance/Performance`])
-      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      const v = parseFloat(this.tags['oeePerformance'])
+      return isNaN(v) ? 0 : Number(v.toFixed(2))
     },
     qualityRaw() {
-      const v = parseFloat(this.tags[`${this.tagPath}/Quality/Quality`])
-      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      const v = parseFloat(this.tags['oeeQuality'])
+      return isNaN(v) ? 0 : Number(v.toFixed(2))
     },
     oee() {
-      const v = parseFloat(this.tags[`${this.tagPath}/OEE`])
-      const percent = isNaN(v) ? 0 : Math.round(v * 10000) / 100
-      return percent > 100 ? '100+%' : percent + '%'
+      const v = parseFloat(this.tags['oee'])
+      const percent = isNaN(v) ? 0 : v
+      const clamped = percent > 100 ? 100 : percent
+      return clamped.toFixed(2) + '%'
     },
     oeeRaw() {
-      const v = parseFloat(this.tags[`${this.tagPath}/OEE`])
-      return isNaN(v) ? 0 : Math.round(v * 10000) / 100
+      const v = parseFloat(this.tags['oee'])
+      return isNaN(v) ? 0 : Number(v.toFixed(2))
     }
   },
   methods: {
-    formatTime(value) {
-      if (!value || value === '-') return '-'
-      const num = parseFloat(value)
-      return isNaN(num) ? '-' : num.toFixed(2) + 's'
-    },
-    formatAvgCycle(value) {
-      if (!value || value === '-') return '-'
-      const num = parseFloat(value)
-      return isNaN(num) ? '-' : num.toFixed(2) + 's'
-    },
     gaugeOptions(label, value, color, rawValue) {
       return {
         chart: {
@@ -132,13 +119,13 @@ export default {
             hollow: { size: '60%' },
             dataLabels: {
               name: {
-                offsetY: 30,
+                offsetY: 20,
                 show: true,
                 color: '#888',
                 fontSize: '18px'
               },
               value: {
-                offsetY: -10,
+                offsetY: -30,
                 fontSize: '28px',
                 color: color,
                 formatter: (function(rv) { return val => (rv > 100 ? '100+%' : val + '%') })(rawValue)
@@ -238,11 +225,12 @@ export default {
   background: #fff;
   border-radius: 1rem;
   box-shadow: 0 1px 8px #0001;
-  padding: 1.2rem 1.2rem 0.5rem 1.2rem;
+  padding: 1.2rem;
   width: 320px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-bottom: 2.5rem;
 }
 .gauge-attrs {
   margin-top: 0.5rem;
@@ -289,5 +277,75 @@ export default {
   font-size: 0.95rem;
   color: #d63031;
   font-weight: normal;
+}
+.compact-oee-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 1px 8px #0001;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  min-width: 180px;
+  min-height: 120px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.compact-oee-card.expanded {
+  min-width: 0;
+  min-height: 180px;
+  box-shadow: 0 4px 24px #0003;
+}
+.expanded-metrics {
+  margin-top: 1.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.metric-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 1.15rem;
+  padding: 0.2rem 0.5rem;
+}
+.metric-label {
+  color: #636e72;
+  font-weight: 500;
+}
+.metric-value {
+  color: #0984e3;
+  font-weight: bold;
+}
+.bar-container {
+  width: 100%;
+  margin: 0.2rem 0 0.7rem 0;
+  display: flex;
+  align-items: center;
+}
+.bar-bg {
+  width: 100%;
+  height: 18px;
+  background: #eee;
+  border-radius: 9px;
+  overflow: hidden;
+  position: relative;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 9px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.availability-bar {
+  background: #a259ec;
+}
+.performance-bar {
+  background: #0984e3;
+}
+.quality-bar {
+  background: #fdcb6e;
 }
 </style> 
