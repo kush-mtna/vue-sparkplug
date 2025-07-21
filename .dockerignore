@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+backend/.venv/
+
+# Docker and editor files
+*.Zone.Identifier
+
+# Git
+.git
+
+# Node modules and build output
+frontend/node_modules/
+frontend/.vite/
+
+# OS files
+.DS_Store
+Thumbs.db 

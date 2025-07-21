@@ -10,4 +10,18 @@ services:
     profiles:
       - dev
 
-  
+  backend-dev:
+    build:
+      context: .
+      dockerfile: dockerfiles/backend.dockerfile
+    environment:
+      - MQTT_HOST=10.2.25.11
+      - MQTT_PORT=1883
+      - MQTT_USERNAME=mes
+      - MQTT_PASSWORD=mes
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend:/app
+    profiles:
+      - dev

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>📡 Sparkplug Live Tags</h1>
+    <ul id="log"></ul>
+
+    <script>
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const socket = new WebSocket(`${protocol}://${window.location.host}/ws`);
+      const log = document.getElementById("log");
+
+      socket.onmessage = (event) => {
+        const item = document.createElement("li");
+        item.textContent = event.data;
+        log.appendChild(item);
+      };
+    </script>
+  </body>
+</html>
