@@ -1,0 +1,13 @@
+services:
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: dockerfiles/frontend.dockerfile
+    ports:
+      - 5173:5173
+    volumes:
+      - ./frontend:/app
+    profiles:
+      - dev
+
+  
