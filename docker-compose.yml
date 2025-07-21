@@ -15,10 +15,13 @@ services:
       context: .
       dockerfile: dockerfiles/backend.dockerfile
     environment:
-      - MQTT_HOST=10.2.25.11
-      - MQTT_PORT=1883
-      - MQTT_USERNAME=mes
-      - MQTT_PASSWORD=mes
+      MQTT_HOST: 10.2.25.11
+      MQTT_PORT: 1883
+      MQTT_USERNAME: mes
+      MQTT_PASSWORD: mes
+      MACHINES_TO_MONITOR: >
+        Injection-E3,Injection-B1,Injection-B2,Injection-A2,
+        Injection-A3,Injection-C1,Injection-C2,Injection-C4
     ports:
       - 8000:8000
     volumes:
