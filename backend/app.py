@@ -145,7 +145,7 @@ if MQTT_USERNAME:
 # --------------------------------------------------------------------
 # 📊 Global variables to hold the names of the metrics to be broadcast
 # --------------------------------------------------------------------
-DESIRED_METRICS = ["oeePerformance", "oeeAvailability", "oeeQuality", "oee"]
+DESIRED_METRICS = ["oeePerformance", "oeeAvailability", "oeeQuality", "oee", "status"]
 MACHINES_TO_MONITOR = os.getenv("MACHINES_TO_MONITOR", "Injection-E3").split(",")
 SUBSCRIBE_TOPICS = []
 NCMD_TOPICS = []

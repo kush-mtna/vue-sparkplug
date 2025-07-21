@@ -1,6 +1,7 @@
 <template>
   <div>
-    <div :class="['compact-oee-card', { expanded: !compact }]">
+    <div :class="['compact-oee-card', { expanded: !compact, 'card-stopped': tags.status === 'stopped', 'card-offline': tags.status === 'offline' }]">
+      <span v-if="tags.status" :class="['status-label', { 'status-green': tags.status === 'fullauto' || tags.status === 'running' || tags.status === 'starting', 'status-red': tags.status === 'offline', 'status-orange': tags.status === 'down' }]">{{ tags.status }}</span>
       <div class="machine-title compact-title">{{ tagPath }}</div>
       <div class="oee-label-side compact-oee-label">
         <span>OEE</span>
@@ -290,7 +291,24 @@ export default {
   color: #d63031;
   font-weight: normal;
 }
+.status-label {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  margin: 0.5rem;
+  font-size: 0.62rem;
+  background: #eee;
+  color: #636e72;
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: 0 1px 4px #0001;
+}
 .compact-oee-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -415,5 +433,32 @@ export default {
 }
 .oee-red {
   color: #d63031 !important;
+}
+.card-stopped {
+  filter: grayscale(1) brightness(0.82);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.status-green {
+  background: #d4fbe2;
+  color: #00b894;
+  border: 1px solid #00b894;
+}
+.status-red {
+  background: #fff0f0;
+  color: #d63031;
+  border: 1px solid #d63031;
+}
+.status-orange {
+  background: #fff6e0;
+  color: #fdcb6e;
+  border: 1px solid #fdcb6e;
+}
+@keyframes flash-warning {
+  0%, 100% { box-shadow: 0 0 0 0 #ffe06600, 0 0 0 0 #ffe06600; }
+  50% { box-shadow: 0 0 32px 12px #ffe066cc, 0 0 0 0 #ffe06600; }
+}
+.card-offline {
+  animation: flash-warning 1.7s infinite alternate;
 }
 </style> 
