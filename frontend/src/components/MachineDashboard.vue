@@ -1,41 +1,46 @@
 <template>
+  <!-- Card for displaying OEE and metrics for a single machine -->
   <div>
-    <div :class="['compact-oee-card', { expanded: !compact, 'card-stopped': tags.status === 'stopped', 'card-offline': tags.status === 'offline' }]">
+    <div class="oee-card" :class="{ 'card-stopped': tags.status === 'stopped', 'card-offline': tags.status === 'offline' }">
+      <!-- Status label (running, stopped, offline, etc.) -->
       <span v-if="tags.status" :class="['status-label', { 'status-green': tags.status === 'fullauto' || tags.status === 'running' || tags.status === 'starting', 'status-red': tags.status === 'offline', 'status-orange': tags.status === 'down' }]">{{ tags.status }}</span>
-      <div class="machine-title compact-title">{{ tagPath }}</div>
-      <div class="oee-label-side compact-oee-label">
+      <!-- Machine name -->
+      <div class="machine-title title">{{ tagPath }}</div>
+      <!-- OEE value and label -->
+      <div class="oee-label-side oee-label">
         <span>OEE</span>
         <span
-          class="oee-value-side compact-oee-value"
+          class="oee-value-side oee-value"
           :class="oeeColorClass"
         >{{ oee }}</span>
       </div>
+      <!-- Condensed metrics: Availability, Performance, Quality -->
       <div class="metrics-condensed">
-        <div class="metric-row compact-metric-row">
-          <span class="metric-label compact-metric-label">Availability</span>
-          <span class="metric-value compact-metric-value">{{ availability.toFixed(2) }}%</span>
+        <div class="metric-row metric-row">
+          <span class="metric-label metric-label">Availability</span>
+          <span class="metric-value metric-value">{{ availability.toFixed(2) }}%</span>
         </div>
-        <div class="bar-container compact-bar-container">
-          <div class="bar-bg compact-bar-bg">
-            <div class="bar-fill availability-bar compact-bar-fill" :style="{ width: availability + '%' }"></div>
+        <div class="bar-container bar-container">
+          <div class="bar-bg bar-bg">
+            <div class="bar-fill availability-bar bar-fill" :style="{ width: availability + '%' }"></div>
           </div>
         </div>
-        <div class="metric-row compact-metric-row">
-          <span class="metric-label compact-metric-label">Performance</span>
-          <span class="metric-value compact-metric-value">{{ performance.toFixed(2) }}%</span>
+        <div class="metric-row metric-row">
+          <span class="metric-label metric-label">Performance</span>
+          <span class="metric-value metric-value">{{ performance.toFixed(2) }}%</span>
         </div>
-        <div class="bar-container compact-bar-container">
-          <div class="bar-bg compact-bar-bg">
-            <div class="bar-fill performance-bar compact-bar-fill" :style="{ width: performance + '%' }"></div>
+        <div class="bar-container bar-container">
+          <div class="bar-bg bar-bg">
+            <div class="bar-fill performance-bar bar-fill" :style="{ width: performance + '%' }"></div>
           </div>
         </div>
-        <div class="metric-row compact-metric-row">
-          <span class="metric-label compact-metric-label">Quality</span>
-          <span class="metric-value compact-metric-value">{{ quality.toFixed(2) }}%</span>
+        <div class="metric-row metric-row">
+          <span class="metric-label metric-label">Quality</span>
+          <span class="metric-value metric-value">{{ quality.toFixed(2) }}%</span>
         </div>
-        <div class="bar-container compact-bar-container">
-          <div class="bar-bg compact-bar-bg">
-            <div class="bar-fill quality-bar compact-bar-fill" :style="{ width: quality + '%' }"></div>
+        <div class="bar-container bar-container">
+          <div class="bar-bg bar-bg">
+            <div class="bar-fill quality-bar bar-fill" :style="{ width: quality + '%' }"></div>
           </div>
         </div>
       </div>
@@ -52,61 +57,48 @@ export default {
     apexchart: VueApexCharts
   },
   props: {
+    // Object containing all tag values for this machine
     tags: {
       type: Object,
       required: true,
       default: () => ({})
     },
+    // The machine name or path
     tagPath: {
       type: String,
       required: true
     },
-    compact: {
-      type: Boolean,
-      default: false
-    }
   },
   computed: {
+    // Returns the availability percentage (0-100)
     availability() {
       const v = parseFloat(this.tags['oeeAvailability'])
       const percent = isNaN(v) ? 0 : v
       const clamped = percent > 100 ? 100 : percent
       return Number(clamped.toFixed(2))
     },
+    // Returns the performance percentage (0-100)
     performance() {
       const v = parseFloat(this.tags['oeePerformance'])
       const percent = isNaN(v) ? 0 : v
       const clamped = percent > 100 ? 100 : percent
       return Number(clamped.toFixed(2))
     },
+    // Returns the quality percentage (0-100)
     quality() {
       const v = parseFloat(this.tags['oeeQuality'])
       const percent = isNaN(v) ? 0 : v
       const clamped = percent > 100 ? 100 : percent
       return Number(clamped.toFixed(2))
     },
-    availabilityRaw() {
-      const v = parseFloat(this.tags['oeeAvailability'])
-      return isNaN(v) ? 0 : Number(v.toFixed(2))
-    },
-    performanceRaw() {
-      const v = parseFloat(this.tags['oeePerformance'])
-      return isNaN(v) ? 0 : Number(v.toFixed(2))
-    },
-    qualityRaw() {
-      const v = parseFloat(this.tags['oeeQuality'])
-      return isNaN(v) ? 0 : Number(v.toFixed(2))
-    },
+    // Returns the OEE value as a string with percent sign
     oee() {
       const v = parseFloat(this.tags['oee'])
       const percent = isNaN(v) ? 0 : v
       const clamped = percent > 100 ? 100 : percent
       return clamped.toFixed(2) + '%'
     },
-    oeeRaw() {
-      const v = parseFloat(this.tags['oee'])
-      return isNaN(v) ? 0 : Number(v.toFixed(2))
-    },
+    // Returns a class for OEE color based on thresholds
     oeeColorClass() {
       const v = parseFloat(this.tags['oee'])
       // Read thresholds from Vite environment variables, fallback to defaults if not set
@@ -118,6 +110,7 @@ export default {
     }
   },
   methods: {
+    // Returns ApexCharts options for a radial gauge (not used in main dashboard)
     gaugeOptions(label, value, color, rawValue) {
       return {
         chart: {
@@ -307,7 +300,7 @@ export default {
   pointer-events: none;
   box-shadow: 0 1px 4px #0001;
 }
-.compact-oee-card {
+.oee-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -321,11 +314,6 @@ export default {
   min-height: 120px;
   cursor: pointer;
   transition: box-shadow 0.2s;
-}
-.compact-oee-card.expanded {
-  min-width: 0;
-  min-height: 180px;
-  box-shadow: 0 4px 24px #0003;
 }
 .expanded-metrics {
   margin-top: 1.5rem;
@@ -378,19 +366,19 @@ export default {
 .quality-bar {
   background: #0984e3;
 }
-.compact-title {
+.title {
   font-size: 0.95rem;
   margin-bottom: 0.2rem;
   text-align: center;
   word-break: break-all;
 }
-.compact-oee-label {
+.oee-label {
   font-size: 0.7rem;
   gap: 0.2rem;
   margin-bottom: 0.1rem;
   margin-top: 0.5rem;
 }
-.compact-oee-value {
+.oee-value {
   font-size: 1.1rem;
 }
 .metrics-condensed {
@@ -400,28 +388,28 @@ export default {
   gap: 0.05rem;
   margin-top: 0.5rem; /* Add margin to separate OEE from metrics */
 }
-.compact-metric-row {
+.metric-row {
   font-size: 0.7rem;
   padding: 0.05rem 0.1rem;
   justify-content: space-between;
 }
-.compact-metric-label {
+.metric-label {
   font-weight: 500;
   color: #636e72;
 }
-.compact-metric-value {
+.metric-value {
   color: #636e72;
   font-weight: bold;
 }
-.compact-bar-container {
+.bar-container {
   margin: 0.01rem 0 0.5rem 0;
   height: 8px;
 }
-.compact-bar-bg {
+.bar-bg {
   height: 8px;
   border-radius: 4px;
 }
-.compact-bar-fill {
+.bar-fill {
   height: 8px;
   border-radius: 4px;
 }

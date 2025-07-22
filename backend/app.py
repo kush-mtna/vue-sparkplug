@@ -10,7 +10,13 @@ import queue
 # --------------------------------------------------------------------
 latest_metrics = {}  # tag_name -> value
 
+# --- MQTT Command Functions ---
+
 def send_trigger_node_rebirth_command(client, topic):
+    """
+    Sends a Node Control/Rebirth command to the specified MQTT topic.
+    This triggers a rebirth event for the node, requesting it to resend its birth certificate.
+    """
     payload = Payload()
 
     metric = payload.metrics.add()
@@ -26,6 +32,10 @@ def send_trigger_node_rebirth_command(client, topic):
     print(f"✅ Sent Node Control/Rebirth = True to {topic}")
 
 def send_trigger_device_rebirth_command(client, topic):
+    """
+    Sends a Device Control/Rebirth command to the specified MQTT topic.
+    This triggers a rebirth event for the device, requesting it to resend its birth certificate.
+    """
     payload = Payload()
     metric = payload.metrics.add()
     metric.name = "Device Control/Rebirth"
@@ -38,6 +48,10 @@ def send_trigger_device_rebirth_command(client, topic):
     print(f"✅ Sent Device Control/Rebirth = True to {topic}")
 
 def on_connect(client, userdata, flags, rc):
+    """
+    Callback for when the MQTT client connects to the broker.
+    Subscribes to all relevant topics and sends rebirth commands.
+    """
     print("✅ MQTT connected with result code:", rc)    
     for topic in SUBSCRIBE_TOPICS:
         client.subscribe(topic, qos=0)
@@ -50,6 +64,11 @@ def on_connect(client, userdata, flags, rc):
         send_trigger_device_rebirth_command(client, topic)
 
 def on_message(client, userdata, msg):
+    """
+    Callback for when an MQTT message is received.
+    Parses Sparkplug B payloads and updates the global metrics state.
+    Broadcasts relevant metric updates to WebSocket clients.
+    """
     if msg.topic.endswith("RIO"):
         return
 
@@ -159,6 +178,7 @@ for machine in MACHINES_TO_MONITOR:
 
 
 
+# --- MQTT Client Setup ---
 client = mqtt.Client(client_id="python-client")
 if MQTT_USERNAME and MQTT_PASSWORD:
     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
@@ -183,6 +203,7 @@ import threading
 
 app = FastAPI()
 
+# Enable CORS for all origins (for development/demo purposes)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -191,7 +212,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-clients = []
+clients = []  # List of connected WebSocket clients
 
 # --------------------------------------------------------------------
 # 📤 Thread-safe queue for metric updates
@@ -199,11 +220,15 @@ clients = []
 metric_update_queue = queue.Queue()
 
 def broadcast_metric_update(name, value):
-    """Enqueue a metric update to be broadcast to all WebSocket clients."""
+    """
+    Enqueue a metric update to be broadcast to all WebSocket clients.
+    """
     metric_update_queue.put((name, value))
 
 async def metric_broadcaster():
-    """Background task to broadcast metric updates from the queue to all WebSocket clients."""
+    """
+    Background task to broadcast metric updates from the queue to all WebSocket clients.
+    """
     while True:
         name, value = await asyncio.get_event_loop().run_in_executor(None, metric_update_queue.get)
         for ws_client in clients[:]:
@@ -215,10 +240,17 @@ async def metric_broadcaster():
 
 @app.on_event("startup")
 async def startup_event():
+    """
+    FastAPI startup event: launches the metric broadcaster background task.
+    """
     asyncio.create_task(metric_broadcaster())
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time metric updates.
+    Sends all cached metrics on connect, then streams updates as they arrive.
+    """
     await websocket.accept()
     clients.append(websocket)
     print("👤 WebSocket client connected")
@@ -241,14 +273,23 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/")
 async def get_index():
+    """
+    Serves the static index.html file for the web UI.
+    """
     return FileResponse("index.html")
 
 @app.get("/api/tags")
 def get_all_tag_names():
+    """
+    Returns a list of all available tag names (metrics).
+    """
     return list(latest_metrics.keys())
 
 @app.get("/api/tags/{tag_name}")
 def get_tag_value(tag_name: str):
+    """
+    Returns the current value for a given tag name, or 404 if not found.
+    """
     if tag_name in latest_metrics:
         return {"name": tag_name, "value": latest_metrics[tag_name]}
     return {"error": f"Tag '{tag_name}' not found"}, 404
@@ -257,6 +298,9 @@ def get_tag_value(tag_name: str):
 # 🚀 Launch both WebSocket and MQTT in parallel
 # --------------------------------------------------------------------
 def start_web():
+    """
+    Starts the FastAPI web server (REST API + WebSocket) in a separate thread.
+    """
     print("🌐 Starting FastAPI WebSocket server...")
     import uvicorn
     config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
@@ -271,6 +315,9 @@ def start_web():
         print(f"❌ Web server failed to start: {e}")
 
 def start_mqtt():
+    """
+    Starts the MQTT client loop (blocking call).
+    """
     print("📡 Starting MQTT loop...")
     try:
         client.loop_forever()
@@ -278,6 +325,7 @@ def start_mqtt():
         print(f"❌ MQTT loop crashed: {e}")
 
 if __name__ == "__main__":
+    # Start the web server in a separate thread, then start the MQTT loop
     threading.Thread(target=start_web).start()
     time.sleep(1)  # Let web server boot
     start_mqtt()

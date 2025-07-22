@@ -1,6 +1,9 @@
 <template>
+  <!-- Main dashboard container -->
   <div class="main-bg" style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif; min-height: 100vh; padding: 2rem;">
+    <!-- Title and highlight -->
     <h1 class="main-title">📡 MTNA Listowel - <span class="highlight">Live OEE Dashboard</span></h1>
+    <!-- Sorting controls for OEE -->
     <div class="sort-row">
       <label for="sortOrder" class="sort-label">Sort by OEE:</label>
       <select id="sortOrder" v-model="sortOrder" class="sort-select">
@@ -10,23 +13,20 @@
         <option value="z-to-a">Z to A</option>
       </select>
     </div>
+    <!-- WebSocket connection status -->
     <p v-if="!connected" class="status-msg">Connecting to WebSocket...</p>
     <p v-if="connected" class="status-msg connected">✅ Connected</p>
-    <!-- OEE Grid View -->
+    <!-- OEE Grid View: displays a card for each machine -->
     <div class="oee-grid">
       <div
         v-for="([machineName, machineTags], idx) in sortedMachines"
         :key="machineName"
         class="oee-card-wrapper"
-        :class="{ expanded: expandedMachines.includes(machineName) }"
-        @click="expandMachine(machineName)"
-        :style="expandedMachines.includes(machineName) ? 'grid-column: span 2;' : ''"
       >
-        <div class="card-accent" :style="{ background: accentColor(idx) }"></div>
+        <!-- MachineDashboard component renders metrics for each machine -->
         <MachineDashboard
           :tags="machineTags"
           :tagPath="machineName"
-          :compact="!expandedMachines.includes(machineName)"
         />
       </div>
     </div>
@@ -44,13 +44,13 @@ export default {
   },
   data() {
     return {
-      tags: {},        // { machine: { metric: value } }
-      connected: false,
-      expandedMachines: [],
-      sortOrder: 'high-to-low',
+      tags: {},        // { machine: { metric: value } } - Holds all machine metrics keyed by machine name
+      connected: false, // WebSocket connection status
+      sortOrder: 'high-to-low', // Sorting order for dashboard
     }
   },
   computed: {
+    // Returns a sorted array of [machineName, machineTags] based on sortOrder
     sortedMachines() {
       // Convert tags object to array of [machineName, machineTags]
       const arr = Object.entries(this.tags);
@@ -74,6 +74,7 @@ export default {
     }
   },
   methods: {
+    // Update a specific tag value for a machine
     updateTag(name, value) {
       const [machine, metric] = name.split('/')
       if (!machine || !metric) return
@@ -87,6 +88,7 @@ export default {
         }
       }
     },
+    // Establishes a WebSocket connection to the backend for real-time updates
     connectWebSocket() {
       const socket = new WebSocket("ws://localhost:8000/ws")
       socket.onopen = () => {
@@ -106,6 +108,7 @@ export default {
         setTimeout(() => this.connectWebSocket(), 2000)
       }
     },
+    // Fetches the initial set of tags/metrics from the backend REST API
     async fetchInitialTags() {
       try {
         const res = await fetch("http://localhost:8000/api/tags")
@@ -123,43 +126,10 @@ export default {
       } catch (err) {
         console.error("Failed to fetch initial tags", err)
       }
-    },
-    expandMachine(machineName) {
-      const idx = this.expandedMachines.indexOf(machineName);
-      if (idx === -1) {
-        this.expandedMachines.push(machineName);
-      } else {
-        this.expandedMachines.splice(idx, 1);
-      }
-    },
-    closeExpanded(machineName) {
-      const idx = this.expandedMachines.indexOf(machineName);
-      if (idx !== -1) {
-        this.expandedMachines.splice(idx, 1);
-      }
-    },
-    formatTimestamp(ts) {
-      if (!ts) return '-'
-      const d = new Date(Number(ts))
-      if (isNaN(d.getTime())) return '-'
-      return d.toLocaleString()
-    },
-    accentColor(idx) {
-      // 8 vibrant colors
-      const colors = [
-        'linear-gradient(135deg, #a259ec 0%, #6dd5ed 100%)',
-        'linear-gradient(135deg, #fdcb6e 0%, #fd6e6a 100%)',
-        'linear-gradient(135deg, #0984e3 0%, #00b894 100%)',
-        'linear-gradient(135deg, #e17055 0%, #f6d365 100%)',
-        'linear-gradient(135deg, #00b894 0%, #00cec9 100%)',
-        'linear-gradient(135deg, #fd6e6a 0%, #a259ec 100%)',
-        'linear-gradient(135deg, #6dd5ed 0%, #e17055 100%)',
-        'linear-gradient(135deg, #f6d365 0%, #fdcb6e 100%)',
-      ];
-      return colors[idx % colors.length];
     }
   },
   async mounted() {
+    // On mount, fetch initial tags and connect to WebSocket for live updates
     await this.fetchInitialTags()
     this.connectWebSocket()
   }
