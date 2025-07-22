@@ -155,6 +155,7 @@ export default {
   color: #e84393;
   background: linear-gradient(90deg, #e84393 0%, #0984e3 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .status-msg {
